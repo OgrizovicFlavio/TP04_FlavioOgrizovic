@@ -4,21 +4,23 @@ using UnityEngine;
 public class SpawnManager : MonoBehaviour
 {
     [SerializeField] private List<GameObject> obstaclePrefabs;
-    [SerializeField] private Transform spawnPoint;
+    [SerializeField] private Transform spawnPoint1;
+    [SerializeField] private Transform spawnPoint2;
+    [SerializeField] private Transform spawnPoint3;
     [SerializeField] private Transform deletePoint;
 
     private List<GameObject> obstacles = new List<GameObject>();
-    private float obstacleSpawnTime = 3f;
+    private float obstacleSpawnTime = 2f;
     private float timeUntilObstacleSpawn;
-    private float obstacleSpeed = 2f;
-    private float poolSize = 20;
+    private float obstacleSpeed = 5f;
+    private float poolSize = 30;
 
     private void Start()
     {
         for (int i = 0; i < poolSize; i++)
         {
             GameObject selectedPrefab = obstaclePrefabs[Random.Range(0, obstaclePrefabs.Count)];
-            GameObject obstacle = Instantiate(selectedPrefab, spawnPoint.position, Quaternion.identity);
+            GameObject obstacle = Instantiate(selectedPrefab, spawnPoint1.position, Quaternion.identity);
             obstacles.Add(obstacle);
             obstacle.SetActive(false);
         }
@@ -60,11 +62,28 @@ public class SpawnManager : MonoBehaviour
 
         } while (obstacleToActivate.activeInHierarchy);
 
-        obstacleToActivate.transform.position = spawnPoint.position;
+        Transform selectedRandomSpawnPoint = GetRandomSpawnPoint();
+        obstacleToActivate.transform.position = selectedRandomSpawnPoint.position;
         obstacleToActivate.SetActive(true);
 
         Rigidbody2D obstacleRb2D = obstacleToActivate.GetComponent<Rigidbody2D>();
         obstacleRb2D.velocity = Vector2.left * obstacleSpeed;
+    }
+
+    private Transform GetRandomSpawnPoint()
+    {
+        int random = Random.Range(0, 3);
+        switch (random)
+        {
+            case 0:
+                return spawnPoint1;
+            case 1:
+                return spawnPoint2;
+            case 2:
+                return spawnPoint3;
+            default:
+                return spawnPoint1;
+        }
     }
 
     private void DeactivateObstacle()
