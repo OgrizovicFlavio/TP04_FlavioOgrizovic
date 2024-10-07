@@ -4,6 +4,7 @@ using UnityEngine;
 public class SpawnManager : MonoBehaviour
 {
     [SerializeField] private List<GameObject> obstaclePrefabs;
+    [SerializeField] private List<GameObject> powerUpPrefabs;
     [SerializeField] private Transform spawnPoint1;
     [SerializeField] private Transform spawnPoint2;
     [SerializeField] private Transform spawnPoint3;
@@ -13,37 +14,65 @@ public class SpawnManager : MonoBehaviour
     private float obstacleSpawnTime = 2f;
     private float timeUntilObstacleSpawn;
     private float obstacleSpeed = 5f;
-    private float poolSize = 30;
+    private int obstaclePoolSize = 30;
+
+    private List<GameObject> powerUps = new List<GameObject>();
+    private float powerUpSpawnTime = 10f;
+    private float timeUntilPowerUpSpawn;
+    private float powerUpSpeed = 5f;
+    private int powerUpPoolSize = 6;
 
     private void Start()
     {
-        for (int i = 0; i < poolSize; i++)
+        for (int i = 0; i < obstaclePoolSize; i++)
         {
             GameObject selectedPrefab = obstaclePrefabs[Random.Range(0, obstaclePrefabs.Count)];
             GameObject obstacle = Instantiate(selectedPrefab, spawnPoint1.position, Quaternion.identity);
             obstacles.Add(obstacle);
             obstacle.SetActive(false);
         }
+
+        for (int i = 0; i < powerUpPoolSize / 2; i++)
+        {
+            GameObject powerUpJump = Instantiate(powerUpPrefabs[0], spawnPoint1.position, Quaternion.identity);
+            GameObject powerUpSlow = Instantiate(powerUpPrefabs[1], spawnPoint1.position, Quaternion.identity);
+            powerUps.Add(powerUpJump);
+            powerUps.Add(powerUpSlow);
+            powerUpJump.SetActive(false);
+            powerUpSlow.SetActive(false);
+        }
     }
 
     private void Update()
     {
-        SpawnLoop();
-        DeactivateObstacle();
+        HandleObstacleSpawn();
+        HandlePowerUpSpawn();
+        DeactivateObjects();
     }
 
-    private void SpawnLoop()
+    private void HandleObstacleSpawn()
     {
         timeUntilObstacleSpawn += Time.deltaTime;
 
         if (timeUntilObstacleSpawn > obstacleSpawnTime)
         {
-            Spawn();
+            SpawnObstacle();
             timeUntilObstacleSpawn = 0f;
         }
     }
 
-    private void Spawn()
+    private void HandlePowerUpSpawn()
+    {
+        timeUntilPowerUpSpawn += Time.deltaTime;
+
+        if (timeUntilPowerUpSpawn > powerUpSpawnTime)
+        {
+            SpawnPowerUp();
+            timeUntilPowerUpSpawn = 0f;
+        }
+    }
+
+    private void SpawnObstacle()
     {
         GameObject obstacleToActivate;
         int attempts = 0;
@@ -86,7 +115,32 @@ public class SpawnManager : MonoBehaviour
         }
     }
 
-    private void DeactivateObstacle()
+    private void SpawnPowerUp()
+    {
+        GameObject powerUpToActivate;
+        int attempts = 0;
+
+        do
+        {
+            powerUpToActivate = powerUps[Random.Range(0, powerUps.Count)];
+            attempts++;
+
+            if (attempts > 100)
+            {
+                Debug.LogWarning("No se encontró un power-up desactivado en 100 intentos.");
+                return;
+            }
+
+        } while (powerUpToActivate.activeInHierarchy);
+
+        powerUpToActivate.transform.position = spawnPoint1.position;
+        powerUpToActivate.SetActive(true);
+
+        Rigidbody2D powerUpRb2D = powerUpToActivate.GetComponent<Rigidbody2D>();
+        powerUpRb2D.velocity = Vector2.left * powerUpSpeed;
+    }
+
+    private void DeactivateObjects()
     {
         foreach (GameObject obstacle in obstacles)
         {
@@ -95,6 +149,16 @@ public class SpawnManager : MonoBehaviour
                 obstacle.SetActive(false);
                 Rigidbody2D obstacleRb2D = obstacle.GetComponent<Rigidbody2D>();
                 obstacleRb2D.velocity = Vector2.zero;
+            }
+        }
+
+        foreach (GameObject powerUp in powerUps)
+        {
+            if (powerUp.activeInHierarchy && powerUp.transform.position.x < deletePoint.position.x)
+            {
+                powerUp.SetActive(false);
+                Rigidbody2D powerUpRb2D = powerUp.GetComponent<Rigidbody2D>();
+                powerUpRb2D.velocity = Vector2.zero;
             }
         }
     }
