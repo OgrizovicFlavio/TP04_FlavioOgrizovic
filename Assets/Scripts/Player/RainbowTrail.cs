@@ -2,13 +2,16 @@ using UnityEngine;
 
 public class RainbowTrail : MonoBehaviour
 {
-    private TrailRenderer rainbowTrail;
-    void Start()
+    private TrailRenderer trailRenderer;
+    private void Awake()
     {
-        rainbowTrail = GetComponent<TrailRenderer>();
+        trailRenderer = GetComponent<TrailRenderer>();
+    }
 
-        Gradient gradient = new Gradient();
-        gradient.SetKeys(
+    public void ApplayRainbowEffect()
+    {
+        Gradient rainbowGradient = new Gradient();
+        rainbowGradient.SetKeys(
             new GradientColorKey[]
             {
                 new GradientColorKey(new Color(1f, 0f, 0f), 0.0f),
@@ -24,6 +27,6 @@ public class RainbowTrail : MonoBehaviour
                 new GradientAlphaKey(0.5f, 1.0f)
             });
 
-        rainbowTrail.colorGradient = gradient;
+        trailRenderer.colorGradient = rainbowGradient;
     }
 }

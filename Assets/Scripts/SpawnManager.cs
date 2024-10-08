@@ -3,43 +3,42 @@ using UnityEngine;
 
 public class SpawnManager : MonoBehaviour
 {
-    [SerializeField] private List<GameObject> obstaclePrefabs;
-    [SerializeField] private List<GameObject> powerUpPrefabs;
+    [Header("Object Pools")]
+    [SerializeField] private List<GameObject> obstacleList;
+    [SerializeField] private List<GameObject> powerUpList;
+    [Header("Spawners")]
     [SerializeField] private Transform spawnPoint1;
     [SerializeField] private Transform spawnPoint2;
     [SerializeField] private Transform spawnPoint3;
     [SerializeField] private Transform deletePoint;
 
     private List<GameObject> obstacles = new List<GameObject>();
-    private float obstacleSpawnTime = 2f;
+    private float obstacleSpawnTime = 1.5f;
     private float timeUntilObstacleSpawn;
     private float obstacleSpeed = 5f;
-    private int obstaclePoolSize = 30;
+    private int obstaclePoolSize = 50;
 
     private List<GameObject> powerUps = new List<GameObject>();
     private float powerUpSpawnTime = 10f;
     private float timeUntilPowerUpSpawn;
     private float powerUpSpeed = 5f;
-    private int powerUpPoolSize = 6;
+    private int powerUpPoolSize = 10;
 
-    private void Start()
+    private void Awake()
     {
         for (int i = 0; i < obstaclePoolSize; i++)
         {
-            GameObject selectedPrefab = obstaclePrefabs[Random.Range(0, obstaclePrefabs.Count)];
+            GameObject selectedPrefab = obstacleList[Random.Range(0, obstacleList.Count)];
             GameObject obstacle = Instantiate(selectedPrefab, spawnPoint1.position, Quaternion.identity);
             obstacles.Add(obstacle);
             obstacle.SetActive(false);
         }
 
-        for (int i = 0; i < powerUpPoolSize / 2; i++)
+        for (int i = 0; i < powerUpPoolSize; i++)
         {
-            GameObject powerUpJump = Instantiate(powerUpPrefabs[0], spawnPoint1.position, Quaternion.identity);
-            GameObject powerUpSlow = Instantiate(powerUpPrefabs[1], spawnPoint1.position, Quaternion.identity);
+            GameObject powerUpJump = Instantiate(powerUpList[0], spawnPoint1.position, Quaternion.identity);
             powerUps.Add(powerUpJump);
-            powerUps.Add(powerUpSlow);
             powerUpJump.SetActive(false);
-            powerUpSlow.SetActive(false);
         }
     }
 
@@ -47,7 +46,7 @@ public class SpawnManager : MonoBehaviour
     {
         HandleObstacleSpawn();
         HandlePowerUpSpawn();
-        DeactivateObjects();
+        DeactivateObject();
     }
 
     private void HandleObstacleSpawn()
@@ -76,20 +75,36 @@ public class SpawnManager : MonoBehaviour
     {
         GameObject obstacleToActivate;
         int attempts = 0;
+        bool isBlockedPosition = false;
+        float radius = 1f;
 
         do
         {
+            isBlockedPosition = false;
             obstacleToActivate = obstacles[Random.Range(0, obstacles.Count)];
             attempts++;
 
             // Evitar un bucle infinito si no hay ninguno desactivado.
-            if (attempts > 100)
+            if (attempts > 200)
             {
-                Debug.LogWarning("No se encontró un obstáculo desactivado en 100 intentos.");
+                Debug.LogWarning("No se encontró un obstáculo desactivado en 200 intentos.");
                 return;
             }
 
-        } while (obstacleToActivate.activeInHierarchy);
+            foreach (GameObject powerUp in powerUps)
+            {
+                if (powerUp.activeInHierarchy)
+                {
+                    float distance = Vector3.Distance(powerUp.transform.position, spawnPoint1.position);
+                    if (distance < radius * 2)
+                    {
+                        isBlockedPosition = true;
+                        break;
+                    }
+                }
+            }
+
+        } while (obstacleToActivate.activeInHierarchy || isBlockedPosition);
 
         Transform selectedRandomSpawnPoint = GetRandomSpawnPoint();
         obstacleToActivate.transform.position = selectedRandomSpawnPoint.position;
@@ -118,20 +133,36 @@ public class SpawnManager : MonoBehaviour
     private void SpawnPowerUp()
     {
         GameObject powerUpToActivate;
+        bool isBlockedPosition = false;
+        float radius = 1f;
         int attempts = 0;
 
         do
         {
+            isBlockedPosition = false;
             powerUpToActivate = powerUps[Random.Range(0, powerUps.Count)];
             attempts++;
 
-            if (attempts > 100)
+            if (attempts > 200)
             {
-                Debug.LogWarning("No se encontró un power-up desactivado en 100 intentos.");
+                Debug.LogWarning("No se encontró un power-up desactivado en 200 intentos.");
                 return;
             }
 
-        } while (powerUpToActivate.activeInHierarchy);
+            foreach (GameObject obstacle in obstacles)
+            {
+                if (obstacle.activeInHierarchy)
+                {
+                    float distance = Vector3.Distance(obstacle.transform.position, spawnPoint1.position);
+                    if (distance < radius * 2)
+                    {
+                        isBlockedPosition = true;
+                        break;
+                    }
+                }
+            }
+
+        } while (powerUpToActivate.activeInHierarchy || isBlockedPosition);
 
         powerUpToActivate.transform.position = spawnPoint1.position;
         powerUpToActivate.SetActive(true);
@@ -140,7 +171,7 @@ public class SpawnManager : MonoBehaviour
         powerUpRb2D.velocity = Vector2.left * powerUpSpeed;
     }
 
-    private void DeactivateObjects()
+    private void DeactivateObject()
     {
         foreach (GameObject obstacle in obstacles)
         {
@@ -160,6 +191,23 @@ public class SpawnManager : MonoBehaviour
                 Rigidbody2D powerUpRb2D = powerUp.GetComponent<Rigidbody2D>();
                 powerUpRb2D.velocity = Vector2.zero;
             }
+        }
+    }
+
+    public void DeactivateAllObjects()
+    {
+        foreach (GameObject obstacle in obstacles)
+        {
+            obstacle.SetActive(false);
+            Rigidbody2D obstacleRb2D = obstacle.GetComponent<Rigidbody2D>();
+            obstacleRb2D.velocity = Vector2.zero;
+        }
+
+        foreach (GameObject powerUp in powerUps)
+        {
+            powerUp.SetActive(false);
+            Rigidbody2D powerUpRb2D = powerUp.GetComponent<Rigidbody2D>();
+            powerUpRb2D.velocity = Vector2.zero;
         }
     }
 }

@@ -15,9 +15,9 @@ TagManager:
   - Player
   - Obstacle
   - Background
-  - PowerUp
+  - PowerUpJump
+  - PowerUpSlow
   - Spawner
-  - 
   - 
   - 
   - 

@@ -1,18 +1,16 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class BackgroundManager : MonoBehaviour
 {
+    [Header("Backgrounds")]
     [SerializeField] private Transform[] backgrounds;
     [SerializeField] private float speed = 10f;
     [SerializeField] private float resetPositionX = -19f;
     [SerializeField] private float backgroundOffset = 19f;
 
-    void Update()
+    private void Update()
     {
-        for (int i = 0; i < backgrounds.Length; i++) 
+        for (int i = 0; i < backgrounds.Length; i++)
         {
             Move(backgrounds[i]);
             if (backgrounds[i].position.x < resetPositionX)
@@ -22,7 +20,7 @@ public class BackgroundManager : MonoBehaviour
         }
     }
 
-    public void Move(Transform background)
+    private void Move(Transform background)
     {
         background.localPosition += Vector3.left * (speed * Time.deltaTime);
 
